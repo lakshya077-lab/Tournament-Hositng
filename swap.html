@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FC MOBILE 2026 | TOURNAMENT REGISTRATION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --gold: #ffb400; --dark: #050505; }
+        body { background-color: var(--dark); color: white; font-family: 'Rajdhani', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .gold-glow { text-shadow: 0 0 15px rgba(255, 180, 0, 0.6); }
+        .team-card { transition: 0.3s ease; border: 1px solid #222; position: relative; overflow: hidden; }
+        .team-card.booked { filter: grayscale(1) opacity(0.4); cursor: not-allowed; }
+        .booked-label { background: #900; color: white; font-family: 'Orbitron'; font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; position: absolute; top: 10px; }
+        .tab-active { border-bottom: 4px solid var(--gold); color: var(--gold); background: rgba(255,180,0,0.05); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="pb-10">
+
+    <header id="unlock-trigger" class="py-16 px-4 border-b-4 border-yellow-500 bg-black text-center cursor-pointer select-none">
+        <h1 class="font-orbitron text-3xl md:text-5xl text-yellow-500 gold-glow tracking-widest">FC MOBILE 26</h1>
+        <p class="text-gray-400 mt-3 font-bold uppercase tracking-widest text-sm">Official Tournament Registration</p>
+    </header>
+
+    <nav class="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-gray-800">
+        <div class="flex overflow-x-auto no-scrollbar justify-start md:justify-center p-2 gap-2">
+            <button onclick="switchLeague('ll')" id="btn-ll" class="nav-btn px-6 py-4 font-orbitron text-xs uppercase tab-active">LaLiga</button>
+            <button onclick="switchLeague('pl')" id="btn-pl" class="nav-btn px-6 py-4 font-orbitron text-xs uppercase">Premier League</button>
+            <button onclick="switchLeague('sa')" id="btn-sa" class="nav-btn px-6 py-4 font-orbitron text-xs uppercase">Serie A</button>
+            <button onclick="switchLeague('bl')" id="btn-bl" class="nav-btn px-6 py-4 font-orbitron text-xs uppercase">Bundesliga+</button>
+            <button onclick="switchLeague('admin')" id="btn-admin" class="hidden nav-btn px-6 py-4 font-orbitron text-xs uppercase text-red-500 font-black">ADMIN VIEW</button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div id="league-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+
+        <div id="admin-panel" class="hidden mt-8">
+            <div class="flex justify-between items-center mb-6 bg-red-950/20 p-4 border border-red-900 rounded-lg">
+                <h2 class="font-orbitron text-xl text-red-500 italic uppercase">Admin Master List</h2>
+                <button onclick="clearAllData()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-bold text-xs uppercase">Clear Database</button>
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-gray-800 bg-[#0c0c0e]">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-900 text-yellow-500 uppercase text-xs font-orbitron">
+                            <th class="p-5">Club</th>
+                            <th class="p-5">Manager</th>
+                            <th class="p-5">UID</th>
+                            <th class="p-5">WhatsApp</th>
+                            <th class="p-5 text-center">Control</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-tbody" class="divide-y divide-gray-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="reg-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4 bg-black/90 backdrop-blur-sm">
+        <div class="bg-[#121214] border-2 border-yellow-500 w-full max-w-md rounded-3xl overflow-hidden">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <img id="modal-crest" src="" class="w-24 h-24 mx-auto mb-4 object-contain">
+                    <h3 id="modal-team-name" class="font-orbitron text-yellow-500 text-2xl uppercase italic"></h3>
+                </div>
+                <form id="reg-form" class="space-y-5">
+                    <input type="hidden" id="selected-team-id">
+                    <input type="text" id="user-name" required placeholder="Gaming Username" class="w-full bg-black p-4 rounded-xl border border-gray-700 text-white font-bold">
+                    <input type="text" id="user-uid" required placeholder="Gaming UID" class="w-full bg-black p-4 rounded-xl border border-gray-700 text-white font-bold">
+                    <input type="tel" id="user-wa" required placeholder="WhatsApp Number" class="w-full bg-black p-4 rounded-xl border border-gray-700 text-white font-bold">
+                    <button type="submit" id="submit-btn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-orbitron py-5 rounded-2xl mt-4 font-black transition-all">REGISTER SLOT</button>
+                    <button type="button" onclick="closeModal()" class="w-full text-gray-500 text-xs uppercase font-bold tracking-widest mt-2">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const logoIDs = {
+            "real madrid": "541", "barcelona": "529", "atletico madrid": "530", "girona": "547", "athletic club": "548", "real sociedad": "532", "betis": "543", "valencia": "539", "villarreal": "533", "getafe": "546", "osasuna": "527", "sevilla": "536", "mallorca": "542", "celta vigo": "538", "rayo vallecano": "540", "las palmas": "537", "alaves": "545", "leganes": "531", "valladolid": "544", "espanyol": "540",
+            "man city": "50", "arsenal": "42", "liverpool": "40", "aston villa": "66", "tottenham": "47", "man united": "33", "newcastle": "34", "chelsea": "49", "west ham": "48", "brighton": "51", "wolves": "39", "fulham": "36", "bournemouth": "35", "crystal palace": "52", "brentford": "55", "everton": "45", "nottingham forest": "65", "leicester": "46", "ipswich": "57", "southampton": "41",
+            "inter milan": "505", "ac milan": "489", "juventus": "496", "atalanta": "499", "bologna": "500", "as roma": "497", "lazio": "487", "fiorentina": "502", "torino": "503", "napoli": "492", "genoa": "495", "monza": "1579", "verona": "504", "lecce": "867", "udinese": "494", "cagliari": "490", "empoli": "511", "parma": "523", "como": "515", "venezia": "517",
+            "bayern munich": "157", "dortmund": "165", "leverkusen": "168", "rb leipzig": "173", "stuttgart": "172", "frankfurt": "169", "hoffenheim": "167", "heidenheim": "191", "werder bremen": "162", "freiburg": "160", "augsburg": "170", "wolfsburg": "161", "mainz 05": "164", "monchengladbach": "163", "union berlin": "182", "bochum": "176", "st. pauli": "186", "holstein kiel": "189", "psg": "85", "marseille": "81"
+        };
+
+        const leagues = {
+            ll: ["Real Madrid", "Barcelona", "Atletico Madrid", "Girona", "Athletic Club", "Real Sociedad", "Betis", "Valencia", "Villarreal", "Getafe", "Osasuna", "Sevilla", "Mallorca", "Celta Vigo", "Rayo Vallecano", "Las Palmas", "Alaves", "Leganes", "Valladolid", "Espanyol"],
+            pl: ["Man City", "Arsenal", "Liverpool", "Aston Villa", "Tottenham", "Man United", "Newcastle", "Chelsea", "West Ham", "Brighton", "Wolves", "Fulham", "Bournemouth", "Crystal Palace", "Brentford", "Everton", "Nottingham Forest", "Leicester", "Ipswich", "Southampton"],
+            sa: ["Inter Milan", "AC Milan", "Juventus", "Atalanta", "Bologna", "AS Roma", "Lazio", "Fiorentina", "Torino", "Napoli", "Genoa", "Monza", "Verona", "Lecce", "Udinese", "Cagliari", "Empoli", "Parma", "Como", "Venezia"],
+            bl: ["Bayern Munich", "Dortmund", "Leverkusen", "RB Leipzig", "Stuttgart", "Frankfurt", "Hoffenheim", "Heidenheim", "Werder Bremen", "Freiburg", "Augsburg", "Wolfsburg", "Mainz 05", "Monchengladbach", "Union Berlin", "Bochum", "St. Pauli", "Holstein Kiel", "PSG", "Marseille"]
+        };
+
+        function getCrest(name) {
+            const id = logoIDs[name.toLowerCase()];
+            return id ? `https://media.api-sports.io/football/teams/${id}.png` : `https://ui-avatars.com/api/?name=${name}&background=111&color=ffb400`;
+        }
+
+        let registeredData = {};
+        let currentLeague = 'll';
+
+        onSnapshot(collection(db, "registrations"), (snapshot) => {
+            registeredData = {};
+            const adminTbody = document.getElementById('admin-tbody');
+            adminTbody.innerHTML = '';
+            snapshot.forEach((docSnap) => {
+                const team = docSnap.id;
+                const data = docSnap.data();
+                registeredData[team] = data;
+                adminTbody.innerHTML += `
+                    <tr>
+                        <td class="p-5 font-bold text-yellow-500 flex items-center gap-3"><img src="${getCrest(team)}" class="w-8 h-8 object-contain"> ${team}</td>
+                        <td class="p-5">${data.name}</td>
+                        <td class="p-5 text-gray-400 text-sm font-mono">${data.uid}</td>
+                        <td class="p-5 text-green-500 font-bold">${data.whatsapp}</td>
+                        <td class="p-5 text-center"><button onclick="cancelRegistration('${team}')" class="text-red-500 border border-red-900 px-3 py-1 rounded">Cancel</button></td>
+                    </tr>`;
+            });
+            renderLeague();
+        });
+
+        window.cancelRegistration = async (team) => {
+            if(confirm(`Are you sure you want to cancel ${team}?`)) {
+                await deleteDoc(doc(db, "registrations", team));
+                alert("Cancelled Successfully.");
+            }
+        };
+
+        window.switchLeague = (l) => {
+            currentLeague = l;
+            document.getElementById('league-container').style.display = l === 'admin' ? 'none' : 'grid';
+            document.getElementById('admin-panel').style.display = l === 'admin' ? 'block' : 'none';
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById(`btn-${l}`).classList.add('tab-active');
+            renderLeague();
+        };
+
+        function renderLeague() {
+            if(currentLeague === 'admin') return;
+            const container = document.getElementById('league-container');
+            container.innerHTML = leagues[currentLeague].map(team => {
+                const isBooked = registeredData[team];
+                return `<div onclick="${isBooked ? '' : `openModal('${team}')`}" class="team-card bg-[#121214] rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3 ${isBooked ? 'booked' : 'cursor-pointer hover:border-yellow-500 shadow-xl'}">
+                    <img src="${getCrest(team)}" class="w-16 h-16 md:w-20 md:h-20 object-contain">
+                    <span class="font-bold uppercase text-xs">${team}</span>
+                    ${isBooked ? `<div class="booked-label uppercase">SLOT FULL</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        window.openModal = (team) => {
+            document.getElementById('modal-crest').src = getCrest(team);
+            document.getElementById('modal-team-name').innerText = team;
+            document.getElementById('selected-team-id').value = team;
+            document.getElementById('reg-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = () => document.getElementById('reg-modal').classList.add('hidden');
+
+        document.getElementById('reg-form').onsubmit = function(e) {
+            e.preventDefault();
+            const team = document.getElementById('selected-team-id').value;
+            
+            setDoc(doc(db, "registrations", team), {
+                name: document.getElementById('user-name').value,
+                uid: document.getElementById('user-uid').value,
+                whatsapp: document.getElementById('user-wa').value
+            });
+
+            // Reverted to simple alert first for guaranteed appearance
+            alert("YOU HAVE SUCCESSFULLY REGISTERED!");
+            closeModal();
+            document.getElementById('reg-form').reset();
+        };
+
+        let timer;
+        const trigger = document.getElementById('unlock-trigger');
+        const triggerStart = () => timer = setTimeout(() => {
+            if(prompt("ADMIN PASS:") === "HTML7") {
+                document.getElementById('btn-admin').classList.remove('hidden');
+                alert("ADMIN MODE ENABLED");
+            }
+        }, 5000);
+        trigger.onmousedown = trigger.ontouchstart = triggerStart;
+        trigger.onmouseup = trigger.onmouseleave = trigger.ontouchend = () => clearTimeout(timer);
+
+        window.clearAllData = async () => {
+            if(confirm("DELETE ALL DATA?")) {
+                const snapshot = await getDocs(collection(db, "registrations"));
+                snapshot.forEach(d => deleteDoc(doc(db, "registrations", d.id)));
+            }
+        };
+
+        renderLeague();
+    </script>
+</body>
+</html>

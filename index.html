@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORLD ELITE TOURNAMENT 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #050505; --card: #121214; --gold: #ffb400; --border: #333336; --glow: rgba(255, 180, 0, 0.4); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Rajdhani', sans-serif; background: var(--bg); color: #fff; padding-bottom: 120px; overflow-x: hidden; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        header { padding: 50px 10px; text-align: center; border-bottom: 3px solid var(--gold); background: #000; cursor: pointer; position: relative; }
+        .main-title { font-family: 'Orbitron'; font-size: 1.5rem; color: var(--gold); letter-spacing: 2px; animation: float 4s ease-in-out infinite; }
+
+        #reset-btn { display: none; margin: 15px auto 0; background: #900; color: #fff; border: 1px solid #f00; padding: 8px 20px; font-family: 'Orbitron'; font-size: 0.7rem; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+
+        nav { display: flex; overflow-x: auto; gap: 8px; padding: 12px; background: #0a0a0a; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border); }
+        .nav-link { flex: 0 0 auto; background: #1a1a1a; border: 1px solid var(--border); color: #fff; padding: 10px 18px; text-align: center; font-family: 'Orbitron'; font-size: 0.65rem; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+        .nav-link.active { background: var(--gold); color: #000; border-color: #fff; box-shadow: 0 0 10px var(--gold); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 15px; min-height: 600px; }
+        .page { display: none; width: 100%; } 
+        .page.active { display: block; animation: slideUpFade 0.7s ease-out forwards; }
+
+        .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-bottom: 30px; }
+        .team-pill { background: var(--card); border: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; align-items: center; border-radius: 8px; font-size: 0.6rem; text-align: center; cursor: default; transition: 0.3s; pointer-events: none; }
+        .team-pill.eliminated { opacity: 0.3; filter: grayscale(1); text-decoration: line-through; }
+        .logo-sm { width: 40px; height: 40px; object-fit: contain; margin-bottom: 5px; }
+
+        .playoff-header { background: linear-gradient(90deg, #d48806, #000); border-left: 5px solid var(--gold); padding: 12px; margin: 25px 0 10px; font-family: 'Orbitron'; font-size: 0.8rem; color: #fff; text-transform: uppercase; }
+        .match-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+        .team-row { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #1c1c1f; gap: 12px; }
+        .dyn-logo { width: 32px; height: 32px; object-fit: contain; background: #222; border-radius: 50%; padding: 4px; border: 1px solid #444; }
+        
+        input { background: transparent; border: none; color: #fff; font-family: 'Rajdhani'; font-size: 1rem; width: 100%; outline: none; font-weight: 700; pointer-events: none; }
+        input.unlocked { pointer-events: auto; border-bottom: 1px dashed #555; }
+        .score-input { width: 45px; height: 30px; background: #000; border: 1px solid #444; color: var(--gold); text-align: center; font-family: 'Orbitron'; border-radius: 4px; }
+
+        .winner-wrap { text-align: center; padding: 60px 20px; background: radial-gradient(circle, #1a1a1a, #000); border: 3px solid var(--gold); border-radius: 30px; margin-top: 20px; box-shadow: 0 0 30px var(--glow); }
+        #champion-logo { width: 160px; height: 160px; border: 5px solid var(--gold); border-radius: 50%; padding: 15px; margin: 15px auto; display: block; background: #000; }
+    </style>
+</head>
+<body>
+
+<header id="unlock-trigger">
+    <h1 class="main-title">WINNER TAKES IT ALL 2026</h1>
+    <button id="reset-btn" onclick="resetAll()">Reset All Data</button>
+</header>
+
+<nav>
+    <div class="nav-link active" onclick="tab(event, 'll')">LaLiga</div>
+    <div class="nav-link" onclick="tab(event, 'pl')">Premier</div>
+    <div class="nav-link" onclick="tab(event, 'sa')">Serie A</div>
+    <div class="nav-link" onclick="tab(event, 'bl')">Bundesliga + L1</div>
+    <div class="nav-link" onclick="tab(event, 'finalissima')">Playoffs</div>
+    <div class="nav-link" onclick="tab(event, 'winner-page')" style="color:var(--gold)">🏆 Winner</div>
+</nav>
+
+<main class="container">
+    <section id="ll" class="page active"><div class="roster-grid" id="ll-roster"></div><div id="ll-bracket"></div></section>
+    <section id="pl" class="page"><div class="roster-grid" id="pl-roster"></div><div id="pl-bracket"></div></section>
+    <section id="sa" class="page"><div class="roster-grid" id="sa-roster"></div><div id="sa-bracket"></div></section>
+    <section id="bl" class="page"><div class="roster-grid" id="bl-roster"></div><div id="bl-bracket"></div></section>
+    
+    <section id="finalissima" class="page">
+        <div class="playoff-header">THE FINALISSIMA - SEMI FINALS</div>
+        <div class="match-card">
+            <div class="team-row"><img class="dyn-logo" id="ps1a"><input type="text" placeholder="Winner League A" oninput="updateLogo(this, 'ps1a')"><input class="score-input" type="number"></div>
+            <div class="team-row"><img class="dyn-logo" id="ps1b"><input type="text" placeholder="Winner League B" oninput="updateLogo(this, 'ps1b')"><input class="score-input" type="number"></div>
+        </div>
+        <div class="match-card">
+            <div class="team-row"><img class="dyn-logo" id="ps2a"><input type="text" placeholder="Winner League C" oninput="updateLogo(this, 'ps2a')"><input class="score-input" type="number"></div>
+            <div class="team-row"><img class="dyn-logo" id="ps2b"><input type="text" placeholder="Winner League D" oninput="updateLogo(this, 'ps2b')"><input class="score-input" type="number"></div>
+        </div>
+        <div class="playoff-header">GRAND FINAL</div>
+        <div class="match-card">
+            <div class="team-row"><img class="dyn-logo" id="pgfa"><input type="text" placeholder="Finalist 1" oninput="updateLogo(this, 'pgfa')"><input class="score-input" type="number"></div>
+            <div class="team-row"><img class="dyn-logo" id="pgfb"><input type="text" placeholder="Finalist 2" oninput="updateLogo(this, 'pgfb')"><input class="score-input" type="number"></div>
+        </div>
+    </section>
+
+    <section id="winner-page" class="page">
+        <div class="winner-wrap">
+            <h2 class="main-title" style="font-size: 2rem;">WINNER</h2>
+            <img id="champion-logo" src="https://ui-avatars.com/api/?name=?&background=222&color=ffb400">
+            <input type="text" id="champ-name" style="text-align:center; font-family:'Orbitron'; color:var(--gold); font-size:2rem; pointer-events:none;" oninput="updateLogo(this, 'champion-logo')" placeholder="TEAM NAME">
+        </div>
+    </section>
+</main>
+
+<script>
+    const logoBase = "https://media.api-sports.io/football/teams/";
+    const teamLogos = {
+        "real madrid": "541", "barcelona": "529", "atletico madrid": "530", "girona": "547", "athletic club": "548", "real sociedad": "532", "betis": "543", "valencia": "539", "villarreal": "533", "getafe": "546", "osasuna": "527", "sevilla": "536", "mallorca": "542", "celta vigo": "538", "rayo vallecano": "540", "las palmas": "537", "alaves": "545", "leganes": "531", "valladolid": "544", "espanyol": "540",
+        "manchester city": "50", "arsenal": "42", "liverpool": "40", "aston villa": "66", "tottenham": "47", "manchester united": "33", "newcastle": "34", "chelsea": "49", "west ham": "48", "brighton": "51", "wolves": "39", "fulham": "36", "bournemouth": "35", "crystal palace": "52", "brentford": "55", "everton": "45", "nottingham forest": "65", "leicester city": "46", "ipswich town": "57", "southampton": "41",
+        "inter": "505", "ac milan": "489", "juventus": "496", "atalanta": "499", "bologna": "500", "roma": "497", "lazio": "487", "fiorentina": "502", "torino": "503", "napoli": "492", "genoa": "495", "monza": "1579", "verona": "504", "lecce": "867", "udinese": "494", "cagliari": "490", "empoli": "511", "parma": "523", "como": "515", "venezia": "517",
+        "bayern munich": "157", "dortmund": "165", "leverkusen": "168", "rb leipzig": "173", "stuttgart": "172", "frankfurt": "169", "hoffenheim": "167", "heidenheim": "191", "werder bremen": "162", "freiburg": "160", "augsburg": "170", "wolfsburg": "161", "mainz 05": "164", "monchengladbach": "163", "union berlin": "182", "bochum": "176", "st. pauli": "186", "holstein kiel": "189", "psg": "85", "marseille": "81"
+    };
+
+    const teamData = {
+        ll: ["Real Madrid", "Barcelona", "Atletico Madrid", "Girona", "Athletic Club", "Real Sociedad", "Betis", "Valencia", "Villarreal", "Getafe", "Osasuna", "Sevilla", "Mallorca", "Celta Vigo", "Rayo Vallecano", "Las Palmas", "Alaves", "Leganes", "Valladolid", "Espanyol"],
+        pl: ["Manchester City", "Arsenal", "Liverpool", "Aston Villa", "Tottenham", "Manchester United", "Newcastle", "Chelsea", "West Ham", "Brighton", "Wolves", "Fulham", "Bournemouth", "Crystal Palace", "Brentford", "Everton", "Nottingham Forest", "Leicester City", "Ipswich Town", "Southampton"],
+        sa: ["Inter", "AC Milan", "Juventus", "Atalanta", "Bologna", "Roma", "Lazio", "Fiorentina", "Torino", "Napoli", "Genoa", "Monza", "Verona", "Lecce", "Udinese", "Cagliari", "Empoli", "Parma", "Como", "Venezia"],
+        bl: ["Bayern Munich", "Dortmund", "Leverkusen", "RB Leipzig", "Stuttgart", "Frankfurt", "Hoffenheim", "Heidenheim", "Werder Bremen", "Freiburg", "Augsburg", "Wolfsburg", "Mainz 05", "Monchengladbach", "Union Berlin", "Bochum", "St. Pauli", "Holstein Kiel", "PSG", "Marseille"]
+    };
+
+    let isAdmin = false;
+
+    function getLogo(name) {
+        const key = name.toLowerCase().trim();
+        return teamLogos[key] ? `${logoBase}${teamLogos[key]}.png` : `https://ui-avatars.com/api/?name=${name}&background=222&color=ffb400`;
+    }
+
+    function updateLogo(input, imgId) {
+        document.getElementById(imgId).src = getLogo(input.value);
+    }
+
+    function resetAll() {
+        if(confirm("Are you sure you want to clear all data?")) {
+            document.querySelectorAll('input').forEach(i => { i.value = ''; });
+            document.querySelectorAll('.team-pill').forEach(p => p.classList.remove('eliminated'));
+            document.querySelectorAll('.dyn-logo').forEach(img => img.src = 'https://ui-avatars.com/api/?name=?&background=222&color=ffb400');
+            document.getElementById('champion-logo').src = 'https://ui-avatars.com/api/?name=?&background=222&color=ffb400';
+        }
+    }
+
+    function tab(e, id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        e.currentTarget.classList.add('active');
+    }
+
+    function buildLeague(id) {
+        const roster = document.getElementById(`${id}-roster`);
+        teamData[id].forEach(t => {
+            const pill = document.createElement('div');
+            pill.className = 'team-pill';
+            pill.innerHTML = `<img class="logo-sm" src="${getLogo(t)}">${t.toUpperCase()}`;
+            pill.onclick = () => { if(isAdmin) pill.classList.toggle('eliminated'); };
+            roster.appendChild(pill);
+        });
+        const bracket = document.getElementById(`${id}-bracket`);
+        const stages = [{n:'Round of 16', m:8}, {n:'Quarter-Finals', m:4}, {n:'Semi-Finals', m:2}, {n:'Final', m:1}];
+        stages.forEach(s => {
+            bracket.innerHTML += `<div class="playoff-header">${s.n}</div>`;
+            for(let i=1; i<=s.m; i++) {
+                const idA = `img-${id}-${s.n}-${i}a`;
+                const idB = `img-${id}-${s.n}-${i}b`;
+                bracket.innerHTML += `
+                <div class="match-card">
+                    <div class="team-row">
+                        <img class="dyn-logo" id="${idA}" src="https://ui-avatars.com/api/?name=?&background=222&color=ffb400">
+                        <input type="text" oninput="updateLogo(this, '${idA}')" placeholder="Team">
+                        <input class="score-input" type="number">
+                    </div>
+                    <div class="team-row">
+                        <img class="dyn-logo" id="${idB}" src="https://ui-avatars.com/api/?name=?&background=222&color=ffb400">
+                        <input type="text" oninput="updateLogo(this, '${idB}')" placeholder="Team">
+                        <input class="score-input" type="number">
+                    </div>
+                </div>`;
+            }
+        });
+    }
+
+    window.onload = () => {
+        ['ll','pl','sa','bl'].forEach(buildLeague);
+        
+        let timer;
+        const trigger = document.getElementById('unlock-trigger');
+        const start = () => timer = setTimeout(() => {
+            if(prompt("Admin Password?") === "HTML7") {
+                isAdmin = true;
+                document.querySelectorAll('input').forEach(i => {
+                    i.classList.add('unlocked');
+                    i.style.pointerEvents = "auto";
+                });
+                document.querySelectorAll('.team-pill').forEach(p => {
+                    p.style.pointerEvents = "auto";
+                    p.style.cursor = "pointer";
+                });
+                document.getElementById('reset-btn').style.display = "block";
+                alert("ADMIN MODE ACTIVE");
+            }
+        }, 5000);
+        const end = () => clearTimeout(timer);
+        trigger.addEventListener('touchstart', start);
+        trigger.addEventListener('touchend', end);
+        trigger.addEventListener('mousedown', start);
+        trigger.addEventListener('mouseup', end);
+        trigger.addEventListener('mouseleave', end);
+    };
+</script>
+</body>
+</html>
